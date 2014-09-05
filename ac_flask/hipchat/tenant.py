@@ -1,3 +1,5 @@
+from datetime import timedelta
+import time
 from ac_flask.hipchat.db import mongo
 import jwt
 import logging
@@ -85,10 +87,18 @@ class Tenant:
     def sign_jwt(self, user_id, data=None):
         if data is None:
             data = {}
-        data.update({
-            'iss': self.id,
-            'prn': user_id
-        })
+
+        now = int(time.time())
+        exp = now + timedelta(hours=1).total_seconds()
+
+        jwt_data = {"iss": self.id,
+                    "iat": now,
+                    "exp": exp}
+
+        if user_id:
+            jwt_data['prn'] = user_id
+
+        data.update(jwt_data)
         return jwt.encode(data, self.secret)
 
 

@@ -1,19 +1,27 @@
-from functools import wraps
 import httplib
 import logging
-from ac_flask.hipchat import installable
 
-from .tenant import Tenant
-import jwt
+from ac_flask.hipchat import installable
+from ac_flask.hipchat.auth import require_tenant
 import os
-from flask import request, abort, jsonify
+from flask import jsonify
+
 
 _log = logging.getLogger(__name__)
 
 
+def _not_none(app, name, default):
+    val = app.config.get(name, default)
+    if val is not None:
+        return val
+    else:
+        raise ValueError("Missing '{key}' configuration property".format(key=name))
+
+
 class Addon(object):
 
-    def __init__(self, app, config=None, env_prefix="AC_", allow_room=True, allow_global=False, scopes=None):
+    def __init__(self, app, key=None, name=None, description=None, config=None, env_prefix="AC_",
+                 allow_room=True, allow_global=False, scopes=None):
         if scopes is None:
             scopes = ['send_notification']
 
@@ -21,12 +29,12 @@ class Addon(object):
         self._init_app(app, config, env_prefix)
 
         self.descriptor = {
-            "key": "mykey",
-            "name": "My name",
+            "key": _not_none(app, 'ADDON_KEY', key),
+            "name": _not_none(app, 'ADDON_NAME', name),
+            "description": app.config.get('ADDON_DESCRIPTION', description) or "",
             "links": {
                 "self": "{base}/addon/descriptor".format(base=app.config['BASE_URL'])
             },
-            "description": "",
             "capabilities": {
                 "installable": {
                     "allowRoom": allow_room,
@@ -39,8 +47,8 @@ class Addon(object):
         }
 
         installable.init(addon=self,
-                           allow_global=allow_global,
-                           allow_room=allow_room)
+                         allow_global=allow_global,
+                         allow_room=allow_room)
 
         self.app.route("/addon/descriptor")(lambda: jsonify(self.descriptor))
 
@@ -76,20 +84,39 @@ class Addon(object):
         self.descriptor['capabilities'].setdefault('configurable', {})['url'] = self.app.config['BASE_URL'] + path
 
         def inner(func):
-            return self.app.route(rule=path, **kwargs)(func)
+            return self.app.route(rule=path, **kwargs)(require_tenant(func))
 
         return inner
 
-    def webhook(self, event, path=None, **kwargs):
+    def webhook(self, event, name=None, pattern=None, path=None, **kwargs):
         if path is None:
             path = "/event/" + event
-        self.descriptor['capabilities'].setdefault('webhook', []).append({
+
+        wh = {
             "event": event,
             "url": self.app.config['BASE_URL'] + path
-        })
+        }
+        if name is not None:
+            wh['name'] = name
+
+        if pattern is not None:
+            wh['pattern'] = pattern
+        self.descriptor['capabilities'].setdefault('webhook', []).append(wh)
 
         def inner(func):
-            return self.app.route(rule=path, methods=['POST'], **kwargs)(func)
+            return self.app.route(rule=path, methods=['POST'], **kwargs)(require_tenant(func))
+
+        return inner
+
+    def route(self, anonymous=False, *args, **kwargs):
+        """
+        Decorator for routes with defaulted required authenticated tenants
+        """
+        def inner(func):
+            f = self.app.route(*args, **kwargs)(func)
+            if not anonymous:
+                f = require_tenant(f)
+            return f
 
         return inner
 

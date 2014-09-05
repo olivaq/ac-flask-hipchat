@@ -3,6 +3,17 @@ from flask import _request_ctx_stack as stack, request
 from flask import abort
 import jwt
 from werkzeug.local import LocalProxy
+from functools import wraps
+
+
+def require_tenant(func):
+
+    @wraps(func)
+    def inner(*args, **kwargs):
+        assert tenant
+        return func(*args, **kwargs)
+
+    return inner
 
 
 def _validate_jwt(req):
