@@ -1,0 +1,8 @@
+.idea
+*.iml
+*.ipr
+*.iws
+*~
+venv
+*.pyc
+run.sh

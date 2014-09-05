@@ -1,0 +1,1 @@
+Framework for HipChat connect apps

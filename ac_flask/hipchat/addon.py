@@ -1,0 +1,97 @@
+from functools import wraps
+import httplib
+import logging
+from ac_flask.hipchat import installable
+
+from .tenant import Tenant
+import jwt
+import os
+from flask import request, abort, jsonify
+
+_log = logging.getLogger(__name__)
+
+
+class Addon(object):
+
+    def __init__(self, app, config=None, env_prefix="AC_", allow_room=True, allow_global=False, scopes=None):
+        if scopes is None:
+            scopes = ['send_notification']
+
+        self.app = app
+        self._init_app(app, config, env_prefix)
+
+        self.descriptor = {
+            "key": "mykey",
+            "name": "My name",
+            "links": {
+                "self": "{base}/addon/descriptor".format(base=app.config['BASE_URL'])
+            },
+            "description": "",
+            "capabilities": {
+                "installable": {
+                    "allowRoom": allow_room,
+                    "allowGlobal": allow_global
+                },
+                "hipchatApiConsumer": {
+                    "scopes": scopes
+                }
+            }
+        }
+
+        installable.init(addon=self,
+                           allow_global=allow_global,
+                           allow_room=allow_room)
+
+        self.app.route("/addon/descriptor")(lambda: jsonify(self.descriptor))
+
+    @staticmethod
+    def _init_app(app, config, env_prefix):
+        app.config.from_object('ac_flask.hipchat.default_settings')
+        if config is not None:
+            app.config.from_object(config)
+
+        if env_prefix is not None:
+            env_vars = {key[len(env_prefix):]: val for key, val in os.environ.items()}
+            app.config.update(env_vars)
+
+        if app.config['DEBUG']:
+            # These two lines enable debugging at httplib level (requests->urllib3->httplib)
+            # You will see the REQUEST, including HEADERS and DATA, and RESPONSE with HEADERS but without DATA.
+            # The only thing missing will be the response.body which is not logged.
+            httplib.HTTPConnection.debuglevel = 1
+
+            # You must initialize logging, otherwise you'll not see debug output.
+            logging.basicConfig()
+            logging.getLogger().setLevel(logging.DEBUG)
+            requests_log = logging.getLogger("requests.packages.urllib3")
+            requests_log.setLevel(logging.DEBUG)
+            requests_log.propagate = True
+        else:
+            logging.basicConfig()
+            logging.getLogger().setLevel(logging.WARN)
+
+        app.events = {}
+
+    def configure_page(self, path="/configure", **kwargs):
+        self.descriptor['capabilities'].setdefault('configurable', {})['url'] = self.app.config['BASE_URL'] + path
+
+        def inner(func):
+            return self.app.route(rule=path, **kwargs)(func)
+
+        return inner
+
+    def webhook(self, event, path=None, **kwargs):
+        if path is None:
+            path = "/event/" + event
+        self.descriptor['capabilities'].setdefault('webhook', []).append({
+            "event": event,
+            "url": self.app.config['BASE_URL'] + path
+        })
+
+        def inner(func):
+            return self.app.route(rule=path, methods=['POST'], **kwargs)(func)
+
+        return inner
+
+    def run(self, *args, **kwargs):
+        self.app.run(*args, **kwargs)
