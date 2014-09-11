@@ -9,7 +9,7 @@ from setuptools import setup
 
 setup(
     name='AC-Flask-HipChat',
-    version='0.1',
+    version='0.1.1',
     url='https://bitbucket.org/mrdon/ac-flask-hipchat',
     license='APLv2',
     author='Don Brown',
