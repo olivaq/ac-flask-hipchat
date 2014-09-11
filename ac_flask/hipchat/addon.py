@@ -125,4 +125,11 @@ class Addon(object):
         return inner
 
     def run(self, *args, **kwargs):
+        if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
+            print("")
+            print("--------------------------------------")
+            print("Public descriptor URL: %s" % self.app.config['BASE_URL'])
+            print("--------------------------------------")
+            print("")
+
         self.app.run(*args, **kwargs)

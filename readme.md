@@ -59,6 +59,10 @@ $ python web.js
 If the server started as expected, you'll see something like the following emitted:
 
 ```
+--------------------------------------
+Public descriptor URL: http://localhost:5000
+--------------------------------------
+
 INFO:werkzeug: * Running on http://127.0.0.1:5000/
 INFO:werkzeug: * Restarting with reloader
 ```
@@ -115,8 +119,13 @@ $ AC_BASE_URL=https://asdf123.ngrok.com python web.py
 When properly configured, you'll see the server report the new local base url when it starts up:
 
 ```
-INFO:werkzeug: * Running on https://asdf123.ngrok.com
+--------------------------------------
+Public descriptor URL: https://asdf123.ngrok.com
+--------------------------------------
+
+INFO:werkzeug: * Running on http://127.0.0.1:5000/
 INFO:werkzeug: * Restarting with reloader
+
 ```
 
 __Note__: by signing up for an ngrok account, you can specify a generally stable, custom subdomain for even easier 
