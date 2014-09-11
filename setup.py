@@ -1,15 +1,15 @@
 """
-Flask-AtlassianConnect
+AC-Flask-HipChat
 -------------
 
-This is the description for that library
+A library to help write a Flask-based HipChat add-on
 """
 from setuptools import setup
 
 
 setup(
     name='AC-Flask-HipChat',
-    version='0.1-dev',
+    version='0.1',
     url='https://bitbucket.org/mrdon/ac-flask-hipchat',
     license='APLv2',
     author='Don Brown',

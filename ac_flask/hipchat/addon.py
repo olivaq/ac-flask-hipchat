@@ -4,7 +4,7 @@ import logging
 from ac_flask.hipchat import installable
 from ac_flask.hipchat.auth import require_tenant
 import os
-from flask import jsonify
+from flask import jsonify, url_for, redirect
 
 
 _log = logging.getLogger(__name__)
@@ -50,7 +50,11 @@ class Addon(object):
                          allow_global=allow_global,
                          allow_room=allow_room)
 
-        self.app.route("/addon/descriptor")(lambda: jsonify(self.descriptor))
+        @self.app.route("/addon/descriptor")
+        def descriptor():
+            return jsonify(self.descriptor)
+
+        self.app.route("/")(descriptor)
 
     @staticmethod
     def _init_app(app, config, env_prefix):
