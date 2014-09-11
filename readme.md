@@ -1,13 +1,11 @@
 # What is this?
 
-A Python [Flask](http://flask.pocoo.org/)-based library for building [HipChat Connect add-ons]
-(https://www.hipchat.com/docs/apiv2/addons).  This is an early, alpha-quality release, 
+A Python [Flask](http://flask.pocoo.org/)-based library for building [HipChat Connect add-ons](https://www.hipchat.com/docs/apiv2/addons).  This is an early, alpha-quality release, 
 but can be used to build real add-ons today.  Future versions may include backward-incompatible changes.
 
 # Getting started
 
-For a simple alternative to the following set up instructions, you may consider using the [Vagrant starter project]
-(https://bitbucket.org/mrdon/ac-flask-hipchat-vagrant) to get up and running quickly.
+For a simple alternative to the following set up instructions, you may consider using the [Vagrant starter project](https://bitbucket.org/mrdon/ac-flask-hipchat-vagrant) to get up and running quickly.
 
 ## Dependencies
 
@@ -85,8 +83,7 @@ you're going to be developing with hipchat.com or a private HipChat instance bei
 The easiest way to test with hipchat.com while developing on your local machine is to use [ngrok](https://ngrok.com).
 Download and install it now if you need to -- it's an amazing tool that will change the way you develop and share web applications.
 
-Start the ngrok tunnel in another terminal window or if using the [Vagrant starter project](https://bitbucket
-.org/mrdon/ac-flask-hipchat-vagrant),
+Start the ngrok tunnel in another terminal window or if using the [Vagrant starter project](https://bitbucket.org/mrdon/ac-flask-hipchat-vagrant),
 you should already have ngrok running, and the URL should be printed to the screen when starting the VM.  For the 
 purposes of this tutorial, we'll assume your domain is `https://asdf123.ngrok.com`.
 
