@@ -60,7 +60,7 @@ If the server started as expected, you'll see something like the following emitt
 
 ```
 --------------------------------------
-Public descriptor URL: http://localhost:5000
+Public descriptor base URL: http://localhost:5000
 --------------------------------------
 
 INFO:werkzeug: * Running on http://127.0.0.1:5000/
@@ -120,7 +120,7 @@ When properly configured, you'll see the server report the new local base url wh
 
 ```
 --------------------------------------
-Public descriptor URL: https://asdf123.ngrok.com
+Public descriptor base URL: https://asdf123.ngrok.com
 --------------------------------------
 
 INFO:werkzeug: * Running on http://127.0.0.1:5000/
