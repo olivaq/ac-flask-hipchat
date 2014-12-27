@@ -38,7 +38,7 @@ def init(addon, allow_global, allow_room, send_events=True, db_name='clients', r
             return _invalid_install("The capabilities URL %s doesn't match the resource's self link %s" %
                                     (data['capabilitiesUrl'], capdoc['links'].get('self', None)))
 
-        client = Tenant(data['oauthId'], data['oauthSecret'], room_id=data['roomId'], capdoc=capdoc)
+        client = Tenant(data['oauthId'], data['oauthSecret'], room_id=data.get('roomId', None), capdoc=capdoc)
 
         try:
             session = client.get_token(redis, token_only=False)
