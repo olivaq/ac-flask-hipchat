@@ -41,7 +41,8 @@ def init(addon, allow_global, allow_room, send_events=True, db_name='clients', r
         client = Tenant(data['oauthId'], data['oauthSecret'], room_id=data.get('roomId', None), capdoc=capdoc)
 
         try:
-            session = client.get_token(redis, token_only=False)
+            session = client.get_token(redis, token_only=False,
+                                       scopes=addon.descriptor['capabilities']['hipchatApiConsumer']['scopes'])
         except Exception as e:
             _log.warn("Error validating installation by receiving token: %s" % e)
             return _invalid_install("Unable to retrieve token using the new OAuth information")
