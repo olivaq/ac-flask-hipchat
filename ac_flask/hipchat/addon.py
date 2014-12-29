@@ -21,7 +21,7 @@ def _not_none(app, name, default):
 class Addon(object):
 
     def __init__(self, app, key=None, name=None, description=None, config=None, env_prefix="AC_",
-                 allow_room=True, allow_global=False, scopes=None):
+                 allow_room=True, allow_global=False, scopes=None, vendor_name=None, vendor_url=None):
         if scopes is None:
             scopes = ['send_notification']
 
@@ -43,6 +43,10 @@ class Addon(object):
                 "hipchatApiConsumer": {
                     "scopes": scopes
                 }
+            },
+            "vendor": {
+                "url": app.config.get('ADDON_VENDOR_URL', vendor_url) or "",
+                "name": app.config.get('ADDON_VENDOR_NAME', vendor_name) or ""
             }
         }
 
