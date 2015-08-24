@@ -6,10 +6,18 @@ import logging
 import requests
 from requests.auth import HTTPBasicAuth
 from werkzeug.exceptions import abort
+from urlparse import urlparse
 
 _log = logging.getLogger(__name__)
 
 ACCESS_TOKEN_CACHE = "hipchat-tokens:{oauth_id}"
+
+
+def base_url(url):
+    if not url:
+        return None
+    result = urlparse(url)
+    return "{scheme}://{netloc}".format(scheme=result.scheme, netloc=result.netloc)
 
 
 class Tenant:
@@ -24,6 +32,9 @@ class Tenant:
         self.homepage = homepage or None if not capdoc else capdoc['links']['homepage']
         self.token_url = token_url or None if not capdoc else capdoc['capabilities']['oauth2Provider']['tokenUrl']
         self.capabilities_url = capabilities_url or None if not capdoc else capdoc['links']['self']
+        self.api_base_url = capdoc['capabilities']['hipchatApiProvider']['url'] if capdoc \
+            else self.capabilities_url[0:self.capabilities_url.rfind('/')] if self.capabilities_url else None
+        self.installed_from = base_url(self.token_url)
 
     def to_map(self):
         return {
@@ -96,7 +107,7 @@ class Tenant:
                     "exp": exp}
 
         if user_id:
-            jwt_data['prn'] = user_id
+            jwt_data['sub'] = user_id
 
         data.update(jwt_data)
         return jwt.encode(data, self.secret)

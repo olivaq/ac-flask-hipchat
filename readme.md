@@ -25,7 +25,7 @@ from flask import Flask
 
 addon = Addon(app=Flask(__name__),
               key="ac-flask-hipchat-greeter",
-              name="HipChat Greeter Example Add-o",
+              name="HipChat Greeter Example Add-on",
               allow_room=True,
               scopes=['send_notification'])
 
@@ -154,3 +154,49 @@ This library provides help with many aspects of add-on development, such as:
 * High-level conveniences for mounting webhook handlers and configuration pages
 * A REST API client with built-in OAuth2 token acquisition and refresh
 * JWT authentication validation, refresh, and token generation for web UI routes (e.g. the `configurable` capability)
+
+See `test.py` for a very simple example add-on.
+
+### Authenticating requests from the iframe to the add-on
+
+Add-ons typically can't use sessions, because browsers treat cookies set by the add-on as third-party cookies.
+You can still make an authenticated call to an endpoint in your add-on, however:
+
+Say there is an endpoint like this:
+
+```
+@addon.route(rule='/data')
+@addon.json_output
+def data():
+    return {'some': 'data'}
+```
+
+You want to call this endpoint from the iframe with the full authentication context. This can be done by rendering 
+a token into the iframe:
+
+```
+@addon.webpanel(key='webpanel.key', name='Panel')
+def web_panel():
+    token = tenant.sign_jwt(sender.id)
+    return render_template('panel.html', token=token)
+```
+
+The template can then render the token into the desired location:
+
+```
+var url = '/data?signed_request={{ token }}'
+```
+
+or
+
+```
+<meta name='token' content='{{ token }}'>
+```
+
+You can also include the full context of the original request from HipChat by using:
+
+```
+token = tenant.sign_jwt(sender.id, {
+    'context': dict(context)
+})
+```

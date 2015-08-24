@@ -1,10 +1,11 @@
+from functools import wraps
 import httplib
 import logging
 
 from ac_flask.hipchat import installable
-from ac_flask.hipchat.auth import require_tenant
+from ac_flask.hipchat.auth import require_tenant, tenant
 import os
-from flask import jsonify, url_for, redirect
+from flask import jsonify
 
 
 _log = logging.getLogger(__name__)
@@ -33,7 +34,7 @@ class Addon(object):
             "name": _not_none(app, 'ADDON_NAME', name),
             "description": app.config.get('ADDON_DESCRIPTION', description) or "",
             "links": {
-                "self": "{base}/addon/descriptor".format(base=app.config['BASE_URL'])
+                "self": self._relative_to_base("/addon/descriptor")
             },
             "capabilities": {
                 "installable": {
@@ -89,20 +90,21 @@ class Addon(object):
         app.events = {}
 
     def configure_page(self, path="/configure", **kwargs):
-        self.descriptor['capabilities'].setdefault('configurable', {})['url'] = self.app.config['BASE_URL'] + path
+        self.descriptor['capabilities'].setdefault('configurable', {})['url'] = self._relative_to_base(path)
 
         def inner(func):
             return self.app.route(rule=path, **kwargs)(require_tenant(func))
 
         return inner
 
-    def webhook(self, event, name=None, pattern=None, path=None, **kwargs):
+    def webhook(self, event, name=None, pattern=None, path=None, auth="jwt", **kwargs):
         if path is None:
             path = "/event/" + event
 
         wh = {
             "event": event,
-            "url": self.app.config['BASE_URL'] + path
+            "url": self._relative_to_base(path),
+            "authentication": auth
         }
         if name is not None:
             wh['name'] = name
@@ -121,12 +123,83 @@ class Addon(object):
         Decorator for routes with defaulted required authenticated tenants
         """
         def inner(func):
-            f = self.app.route(*args, **kwargs)(func)
             if not anonymous:
-                f = require_tenant(f)
-            return f
+                func = require_tenant(func)
+            func = self.app.route(*args, **kwargs)(func)
+            return func
 
         return inner
+
+    def glance(self, key, name, target, icon, icon2x=None, conditions=None, anonymous=False, path=None, **kwargs):
+
+        if path is None:
+            path = "/glance/" + key
+
+        if icon2x is None:
+            icon2x = icon
+
+        glance_capability = {
+            "key": key,
+            "name": {
+                "value": name
+            },
+            "queryUrl": self._relative_to_base(path),
+            "target": target,
+            "icon": {
+                "url": self._relative_to_base(icon),
+                "url@2x": self._relative_to_base(icon2x)
+            },
+            "conditions": conditions or []
+        }
+
+        self.descriptor['capabilities'].setdefault('glance', []).append(glance_capability)
+
+        def inner(func):
+            return self.route(anonymous, rule=path, **kwargs)(self.cors(self.json_output(func)))
+
+        return inner
+
+    def webpanel(self, key, name, location="hipchat.sidebar.right", anonymous=False, path=None, **kwargs):
+
+        if path is None:
+            path = "/webpanel/" + key
+
+        webpanel_capability = {
+            "key": key,
+            "name": {
+                "value": name
+            },
+            "url": self._relative_to_base(path),
+            "location": location
+        }
+
+        self.descriptor['capabilities'].setdefault('webPanel', []).append(webpanel_capability)
+
+        def inner(func):
+            return self.route(anonymous, rule=path, **kwargs)(func)
+
+        return inner
+
+    def cors(self, func):
+        @wraps(func)
+        def inner(*args, **kwargs):
+            origin = tenant.installed_from if tenant else None
+            response = self.app.make_response(func(*args, **kwargs))
+            response.headers['Access-Control-Allow-Origin'] = origin or '*'
+            return response
+        return inner
+
+    def json_output(self, func):
+        @wraps(func)
+        def inner(*args, **kwargs):
+            res = func(*args, **kwargs)
+            return jsonify(res) if isinstance(res, dict) else res
+        return inner
+
+    def _relative_to_base(self, path):
+        base = self.app.config['BASE_URL']
+        path = '/' + path if not path.startswith('/') else path
+        return base + path
 
     def run(self, *args, **kwargs):
         if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
