@@ -5,7 +5,8 @@ import logging
 from ac_flask.hipchat import installable
 from ac_flask.hipchat.auth import require_tenant, tenant
 import os
-from flask import jsonify
+from flask import jsonify, request
+from urlparse import urlparse
 
 
 _log = logging.getLogger(__name__)
@@ -183,9 +184,10 @@ class Addon(object):
     def cors(self, func):
         @wraps(func)
         def inner(*args, **kwargs):
-            origin = tenant.installed_from if tenant else None
+            whitelisted_origin = self._get_white_listed_origin()
+            installed_from = tenant.installed_from if tenant else None
             response = self.app.make_response(func(*args, **kwargs))
-            response.headers['Access-Control-Allow-Origin'] = origin or '*'
+            response.headers['Access-Control-Allow-Origin'] = whitelisted_origin or installed_from or '*'
             return response
         return inner
 
@@ -200,6 +202,14 @@ class Addon(object):
         base = self.app.config['BASE_URL']
         path = '/' + path if not path.startswith('/') else path
         return base + path
+
+    def _get_white_listed_origin(self):
+        origin = request.headers['origin']
+        if origin:
+            origin_url = urlparse(origin)
+            if origin_url.hostname.endswith(self.app.config['CORS_WHITELIST']):
+                return origin
+        return None
 
     def run(self, *args, **kwargs):
         if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
