@@ -51,7 +51,7 @@ To run this example yourself, add these files to a new directory and run the fol
 
 ```
 $ pip install -r requirements.txt
-$ python web.js
+$ python web.py
 ```
 
 If the server started as expected, you'll see something like the following emitted:
