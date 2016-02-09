@@ -208,7 +208,7 @@ class Addon(object):
             origin = request.headers['origin']
             if origin:
                 origin_url = urlparse(origin)
-                if origin_url.hostname.endswith(self.app.config['CORS_WHITELIST']):
+                if origin_url and origin_url.hostname.endswith(self.app.config['CORS_WHITELIST']):
                     return origin
             return None
         except KeyError:

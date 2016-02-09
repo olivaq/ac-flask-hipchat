@@ -24,3 +24,9 @@ class FlaskrTestCase(TestCase):
         app = self.create_app()
         addon = ac_flask.hipchat.addon.Addon(app, "KEY", "NAME")
         self.assertEqual(None, addon._get_white_listed_origin())
+
+    def test__get_white_listed_origin_success(self):
+        app = self.create_app()
+        with app.test_request_context(headers={'origin': 'http://foo.hipchat.com'}):
+            addon = ac_flask.hipchat.addon.Addon(app, "KEY", "NAME")
+            self.assertEqual("http://foo.hipchat.com", addon._get_white_listed_origin())
