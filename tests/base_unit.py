@@ -1,4 +1,3 @@
-import unittest
 import flask
 from flask import Flask
 from flask.ext.testing import TestCase
