@@ -3,3 +3,4 @@ PyJWT
 pymongo
 redis
 requests
+Flask-Testing

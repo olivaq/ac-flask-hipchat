@@ -204,12 +204,15 @@ class Addon(object):
         return base + path
 
     def _get_white_listed_origin(self):
-        origin = request.headers['origin']
-        if origin:
-            origin_url = urlparse(origin)
-            if origin_url.hostname.endswith(self.app.config['CORS_WHITELIST']):
-                return origin
-        return None
+        try:
+            origin = request.headers['origin']
+            if origin:
+                origin_url = urlparse(origin)
+                if origin_url.hostname.endswith(self.app.config['CORS_WHITELIST']):
+                    return origin
+            return None
+        except KeyError:
+            return None
 
     def run(self, *args, **kwargs):
         if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
