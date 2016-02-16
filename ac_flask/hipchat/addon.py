@@ -175,7 +175,7 @@ class Addon(object):
             "name": {
                 "value": name
             },
-            "url": self._relative_to_base(path.split('/<')[0]),
+            "url": self._relative_to_base(path),
             "location": location
         }
 
