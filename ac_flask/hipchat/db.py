@@ -27,6 +27,7 @@ def _get_mongo_db():
         if not hasattr(ctx, 'mongo_db'):
             ctx.mongo_db = _connect_mongo_db()
         return ctx.mongo_db
+    return _connect_mongo_db()  # This allows gevent to work with the DB, otherwise flask single-threaded stuff screws us up a bit
 
 
 def _get_redis():
@@ -35,6 +36,7 @@ def _get_redis():
         if not hasattr(ctx, 'redis'):
             ctx.redis = _connect_redis()
         return ctx.redis
+    return _connect_redis()  # Allows gevent to work with DB
 
 redis = LocalProxy(_get_redis)
 mongo = LocalProxy(_get_mongo_db)

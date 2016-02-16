@@ -18,7 +18,10 @@ def require_tenant(func):
 
 
 def _validate_jwt(req):
-    jwt_data = req.args.get('signed_request', None)
+    if 'signed_request' in req.form:
+        jwt_data = req.form['signed_request']
+    else:
+        jwt_data = req.args.get('signed_request', None)
 
     if not jwt_data:
         header = req.headers.get('authorization', '')
@@ -33,8 +36,10 @@ def _validate_jwt(req):
         data = jwt.decode(jwt_data, client.secret)
         return client, data
 
-    except jwt.exceptions.DecodeError:
+    except jwt.DecodeError:
         abort(400)
+    except jwt.ExpiredSignature:
+        abort(401)
 
 
 def _get_tenant():
