@@ -52,6 +52,11 @@ class Addon(object):
             }
         }
 
+        if app.config.get('BASE_URL') is not None and app.config.get('AVATAR_URL') is not None:
+            self.descriptor['capabilities']['hipchatApiConsumer']['avatar'] = {
+                'url': app.config.get('BASE_URL') + app.config.get('AVATAR_URL')
+            }
+
         installable.init(addon=self,
                          allow_global=allow_global,
                          allow_room=allow_room)
