@@ -33,7 +33,7 @@ def _validate_jwt(req):
     try:
         oauth_id = jwt.decode(jwt_data, verify=False)['iss']
         client = Tenant.load(oauth_id)
-        data = jwt.decode(jwt_data, client.secret)
+        data = jwt.decode(jwt_data, client.secret, leeway=10)
         return client, data
 
     except jwt.DecodeError:
