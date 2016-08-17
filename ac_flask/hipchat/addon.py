@@ -22,10 +22,18 @@ def _not_none(app, name, default):
 
 class Addon(object):
 
-    def __init__(self, app, key=None, name=None, description=None, config=None, env_prefix="AC_",
-                 allow_room=True, allow_global=False, scopes=None, vendor_name=None, vendor_url=None):
+    def __init__(self, app, key=None, name=None, description=None, config=None,
+                 env_prefix="AC_", allow_room=True, allow_global=False,
+                 scopes=None, vendor_name=None, vendor_url=None, avatar=None):
         if scopes is None:
             scopes = ['send_notification']
+
+        if avatar is None:
+            avatar_url = "https://abotars.hipch.at/bot/" + _not_none(app, 'ADDON_KEY', key) + ".png"
+            avatar = {
+                "url": avatar_url,
+                "url@2x": avatar_url
+            }
 
         self.app = app
         self._init_app(app, config, env_prefix)
@@ -43,7 +51,8 @@ class Addon(object):
                     "allowGlobal": allow_global
                 },
                 "hipchatApiConsumer": {
-                    "scopes": scopes
+                    "scopes": scopes,
+                    "avatar": avatar
                 }
             },
             "vendor": {
