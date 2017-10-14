@@ -7,7 +7,7 @@ from ac_flask.hipchat.auth import require_tenant, tenant
 import os
 from flask import jsonify, request
 from urlparse import urlparse
-
+from db import db, cache
 
 _log = logging.getLogger(__name__)
 
@@ -37,6 +37,11 @@ class Addon(object):
 
         self.app = app
         self._init_app(app, config, env_prefix)
+
+        db.init_app(self.app)
+        cache.init_app(self.app, config=app.config)
+
+        db.create_all(app=self.app)
 
         self.descriptor = {
             "key": _not_none(app, 'ADDON_KEY', key),
@@ -71,6 +76,7 @@ class Addon(object):
                          allow_room=allow_room)
 
         @self.app.route("/addon/descriptor")
+        @cache.cached(3600)
         def descriptor():
             return jsonify(self.descriptor)
 
@@ -78,10 +84,10 @@ class Addon(object):
 
     @staticmethod
     def _init_app(app, config, env_prefix):
-        app.config.from_object('ac_flask.hipchat.default_settings')
+        if 'BASE_URL' not in app.config:
+            app.config.from_object('ac_flask.hipchat.default_settings')
         if config is not None:
             app.config.from_object(config)
-
         if env_prefix is not None:
             env_vars = {key[len(env_prefix):]: val for key, val in os.environ.items()}
             app.config.update(env_vars)

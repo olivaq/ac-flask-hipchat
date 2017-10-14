@@ -2,7 +2,7 @@ import json
 import logging
 
 from ac_flask.hipchat.events import events
-from ac_flask.hipchat.db import mongo, redis
+from .db import db, cache
 from .tenant import Tenant
 from flask import request
 import requests
@@ -21,7 +21,6 @@ def init(addon, allow_global, allow_room, send_events=True, db_name='clients', r
     # noinspection PyUnusedLocal
     @addon.app.route('/addon/installable', methods=['POST'])
     def on_install():
-        clients = mongo[db_name]
         data = json.loads(request.data)
         if not data.get('roomId', None) and not allow_global:
             return _invalid_install("This add-on can only be installed in individual rooms.  Please visit the " +
@@ -41,7 +40,7 @@ def init(addon, allow_global, allow_room, send_events=True, db_name='clients', r
         client = Tenant(data['oauthId'], data['oauthSecret'], room_id=data.get('roomId', None), capdoc=capdoc)
 
         try:
-            session = client.get_token(redis, token_only=False,
+            session = client.get_token(token_only=False,
                                        scopes=addon.descriptor['capabilities']['hipchatApiConsumer']['scopes'])
         except Exception as e:
             _log.warn("Error validating installation by receiving token: %s" % e)
@@ -55,8 +54,8 @@ def init(addon, allow_global, allow_room, send_events=True, db_name='clients', r
 
         client.group_id = session['group_id']
         client.group_name = session['group_name']
-        clients.remove(client.id_query)
-        clients.insert(client.to_map())
+        db.session.add(client)
+        db.session.commit()
         if send_events:
             events.fire_event('install', {"client": client})
         return '', 201
@@ -73,9 +72,9 @@ def init(addon, allow_global, allow_room, send_events=True, db_name='clients', r
 
 
 def uninstall_client(oauth_id, db_name='clients', send_events=True):
-    client = Tenant.load(oauth_id)
-    clients = mongo[db_name]
-    client_filter = {"id": oauth_id}
-    clients.remove(client_filter)
+    client = Tenant.query.filter_by(oauth_id=oauth_id).first()
+    cache.delete_memoized(client.get_token)
+    db.session.delete(client)
+    db.session.commit()
     if send_events:
         events.fire_event('uninstall', {"client": client})

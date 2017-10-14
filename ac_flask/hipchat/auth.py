@@ -32,7 +32,7 @@ def _validate_jwt(req):
 
     try:
         oauth_id = jwt.decode(jwt_data, verify=False)['iss']
-        client = Tenant.load(oauth_id)
+        client = Tenant.query.filter_by(oauth_id=oauth_id).first()
         data = jwt.decode(jwt_data, client.secret, leeway=10)
         return client, data
 
@@ -54,7 +54,7 @@ def _get_tenant():
                 cur_context = data.get('context', None)
             elif body and 'oauth_client_id' in body:
                 tenant_id = body['oauth_client_id']
-                cur_tenant = Tenant.load(tenant_id)
+                cur_tenant = Tenant.query.filter_by(tenant_id=tenant_id).first()
             else:
                 cur_tenant = None
 

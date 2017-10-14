@@ -1,5 +1,5 @@
 Flask
 PyJWT
-pymongo
-redis
+flask_cache
+flask_sqlalchemy
 requests

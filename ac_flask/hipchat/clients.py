@@ -1,6 +1,5 @@
 import json
 from ac_flask.hipchat.auth import tenant
-from ac_flask.hipchat.db import redis
 import requests
 
 
@@ -14,7 +13,7 @@ def post(url, data, token):
 class RoomClient(object):
     @staticmethod
     def send_notification(message):
-        token = tenant.get_token(redis)
+        token = tenant.get_token()
         return post("%s/room/%s/notification" % (tenant.api_base_url, tenant.room_id), {"message": message}, token)
 
 
@@ -24,7 +23,7 @@ room_client = RoomClient()
 class AddOnClient(object):
     @staticmethod
     def update_global_glance(glance_key, glance_data):
-        token = tenant.get_token(redis, scopes=['view_group'])
+        token = tenant.get_token(scopes=['view_group'])
         return post("%s/addon/ui" % tenant.api_base_url, {
             "glance": [
                 {"content": glance_data, "key": glance_key}
@@ -33,7 +32,7 @@ class AddOnClient(object):
 
     @staticmethod
     def update_room_glance(glance_key, glance_data, room_id):
-        token = tenant.get_token(redis, scopes=['view_room'])
+        token = tenant.get_token(scopes=['view_room'])
         return post("%s/addon/ui/room/%s" % (tenant.api_base_url, room_id), {
             "glance": [
                 {"content": glance_data, "key": glance_key}
@@ -42,7 +41,7 @@ class AddOnClient(object):
 
     @staticmethod
     def update_user_glance(glance_key, glance_data, user_id):
-        token = tenant.get_token(redis, scopes=['view_group'])
+        token = tenant.get_token(scopes=['view_group'])
         return post("%s/addon/ui/user/%s" % (tenant.api_base_url, user_id), {
             "glance": [
                 {"content": glance_data, "key": glance_key}
