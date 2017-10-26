@@ -22,10 +22,10 @@ setup(
     platforms='any',
     install_requires=[
         'Flask',
-        'pymongo',
-        'redis',
-        'requests',
-        'PyJWT'
+        'PyJWT',
+        'flask_cache',
+        'flask_sqlalchemy',
+        'requests'
     ],
     classifiers=[
         'Environment :: Web Environment',

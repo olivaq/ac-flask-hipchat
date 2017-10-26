@@ -7,7 +7,7 @@ from .tenant import Tenant
 from flask import request
 import requests
 
-
+logging.basicConfig(level=logging.DEBUG)
 _log = logging.getLogger(__name__)
 
 
